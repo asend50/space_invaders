@@ -1,5 +1,6 @@
 use crate::custom::bullet::Bullet;
 use crate::custom::enemy::Enemy;
+use crate::custom::health::Health;
 use crate::custom::player::Player;
 use crate::ui::label::Label;
 use crate::ui::still_image::StillImage;
@@ -53,8 +54,11 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
 
     // Variables:
     let mut bullets: Vec<Bullet> = Vec::new();
+    let mut enemybullets: Vec<Bullet> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
+    let mut hearts: Vec<Health> = Vec::new();
     let mut shoot_cooldown = 0.0;
+    let mut enemyshoot_cooldown = 2.0;
     let mut columns;
     let mut rows;
     let mut enemy_speed = 0.2;
@@ -64,6 +68,21 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
     let max_x = 740.0;
     let random_columns: i32 = rng.random_range(5..=6);
     let random_rows: i32 = rng.random_range(4..=6);
+    let mut player_hp = 3;
+
+    for i in 0..player_hp {
+        let heart = Health::from_preload(
+            tm.get_preload("assets/heart.png").unwrap(),
+            35.0 + i as f32 * 55.0,
+            675.0,
+            45.0,
+            45.0,
+            true,
+            1.0,
+        );
+
+        hearts.push(heart);
+    }
 
     // Enemy Creation:
     columns = random_columns;
@@ -103,31 +122,30 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
             }
         }
 
-        // Bullet Code
-        let time = get_frame_time();
-        shoot_cooldown -= time;
+        // Player Bullet Code
+        let playershottime = get_frame_time();
+        shoot_cooldown -= playershottime;
 
         if is_key_down(KeyCode::Space) && shoot_cooldown <= 0.0 {
             shoot_cooldown = 0.75;
 
-            let bullet = Bullet::new(
+            let bullet = Bullet::from_preload(
+                tm.get_preload("assets/bullet.png").unwrap(),
                 player.image.get_x() + 25.0,
                 player.image.get_y(),
                 screen_width() * 0.02,
                 screen_height() * 0.05,
-                "assets/bullet.png",
                 true,
                 1.0,
                 3.0,
-            )
-            .await;
+            );
 
             bullets.push(bullet);
         }
 
         for bullet_index in (0..bullets.len()).rev() {
             let bullet = &mut bullets[bullet_index];
-            bullet.shoot();
+            bullet.playershoot();
             bullet.get_image().draw();
 
             if bullet.image.get_y() < -100.0 {
@@ -136,10 +154,6 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
                 bullets.remove(bullet_index);
                 continue;
             }
-
-            let last_shot = 0.0;
-
-            if is_key_down(KeyCode::Space) && get_time() - last_shot > 1.0 {}
 
             // Enemy and Bullet collsion to kill enemies.
             for enemy_index in (0..enemies.len()).rev() {
@@ -155,6 +169,58 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
                     break;
                 }
             }
+        }
+
+        // Enemy Bullet Code
+        enemyshoot_cooldown -= playershottime;
+
+        if !enemies.is_empty() && enemyshoot_cooldown <= 0.0 {
+            enemyshoot_cooldown = 2.0;
+
+            let enemy_index = rng.random_range(0..enemies.len());
+            let randomenemy = &enemies[enemy_index];
+
+            let enemybullet = Bullet::from_preload(
+                tm.get_preload("assets/enemybullet.png").unwrap(),
+                randomenemy.image.get_x() + 25.0,
+                randomenemy.image.get_y(),
+                screen_width() * 0.02,
+                screen_height() * 0.05,
+                true,
+                1.0,
+                3.0,
+            );
+
+            enemybullets.push(enemybullet);
+        }
+
+        for enemybullet_index in (0..enemybullets.len()).rev() {
+            let enemybullet = &mut enemybullets[enemybullet_index];
+            enemybullet.enemyshoot();
+            enemybullet.get_image().draw();
+
+            if enemybullet.image.get_y() > screen_height() + 100.0 {
+                enemybullet.image.clear();
+                enemybullet.move_dir = vec2(0.0, 0.0);
+                enemybullets.remove(enemybullet_index);
+                continue;
+            }
+
+            if check_collision(enemybullet.get_image(), player.get_image(), 1) {
+                enemybullets.remove(enemybullet_index);
+
+                if !hearts.is_empty() {
+                    hearts.pop();
+                }
+
+                player_hp -= 1;
+
+                if player_hp <= 0 {
+                    return ("lose".to_string(), tm, score, highscore);
+                }
+
+                break;
+            }}
 
             // Next Wave code
             if enemies.is_empty() {
@@ -177,8 +243,21 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
                         enemies.push(enemy);
                     }
                 }
+
+                if player_hp < 3 {
+                    player_hp += 1;
+                    let heart = Health::from_preload(
+                        tm.get_preload("assets/heart.png").unwrap(),
+                        35.0 + hearts.len() as f32 * 55.0,
+                        675.0,
+                        45.0,
+                        45.0,
+                        true,
+                        1.0,
+                    );
+                    hearts.push(heart);
+                }
             }
-        }
 
         // Enemy Movement
         for enemy in &mut enemies {
@@ -205,6 +284,10 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
         gamebars.draw();
         lbl_score.draw();
         lbl_highscore.draw();
+
+        for heart in &hearts {
+            heart.get_image().draw();
+        }
 
         if btn_exit.click() {
             return ("".to_string(), tm, score, highscore);

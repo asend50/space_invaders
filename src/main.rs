@@ -36,7 +36,7 @@ async fn main() {
 
     let mut tm = TextureManager::new();
 
-    tm.preload_with_loading_screen(&["assets/menu.png", "assets/player.png", "assets/enemy.png", "assets/bullet.png", "assets/gamebackground.png", "assets/gamebars.png", "assets/lose.png", "assets/win.png", "assets/help.png"], None, None).await;
+    tm.preload_with_loading_screen(&["assets/menu.png", "assets/player.png", "assets/enemy.png", "assets/bullet.png", "assets/enemybullet.png", "assets/gamebackground.png", "assets/gamebars.png", "assets/lose.png", "assets/win.png", "assets/help.png", "assets/heart.png"], None, None).await;
 
     let mut score = 0;
     let mut highscore = 0;
