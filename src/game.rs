@@ -175,7 +175,7 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
         enemyshoot_cooldown -= playershottime;
 
         if !enemies.is_empty() && enemyshoot_cooldown <= 0.0 {
-            enemyshoot_cooldown = 2.0;
+            enemyshoot_cooldown = 1.5;
 
             let enemy_index = rng.random_range(0..enemies.len());
             let randomenemy = &enemies[enemy_index];
