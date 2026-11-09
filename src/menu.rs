@@ -16,7 +16,7 @@ pub async fn run(tm: TextureManager, score: i32, highscore: i32) -> (String, Tex
     true,                  // Enable stretching
     1.0,                   // Zoom level (100%)
 );
-let mut lbl_highscore = Label::new(format!("Highscore:\n{}", highscore), 425.0, 650.0, 45);
+let mut lbl_highscore = Label::new(format!("Highscore: {}", highscore), 350.0, 650.0, 45);
 lbl_highscore.with_colors(GREEN, Some(BLACK));
 
 let btn_exit = TextButton::new(

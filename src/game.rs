@@ -50,6 +50,8 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
 
     let mut lbl_score = Label::new(format!("Score:\n{}", score), 25.0, 125.0, 45);
     let mut lbl_highscore = Label::new(format!("Highscore:\n{}", highscore), 815.0, 125.0, 45);
+    let mut wave = 1;
+    let mut lbl_wave = Label::new(format!(""), 835.0, 710.0, 45);
     let mut rng = ::rand::rng();
 
     // Variables:
@@ -114,6 +116,7 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
 
         player.keypress();
         player.move_player();
+        lbl_wave.set_text(format!("Wave: {}", wave));
 
         // Player Collision
         if player.move_dir.x != 0.0 {
@@ -220,44 +223,46 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
                 }
 
                 break;
-            }}
+            }
+        }
 
-            // Next Wave code
-            if enemies.is_empty() {
-                let random_columns: i32 = rng.random_range(5..=6);
-                let random_rows: i32 = rng.random_range(3..=4);
+        // Next Wave code
+        if enemies.is_empty() {
+            wave += 1;
+            let random_columns: i32 = rng.random_range(5..=6);
+            let random_rows: i32 = rng.random_range(3..=4);
 
-                columns = random_columns;
-                rows = random_rows;
-                for row in 0..rows {
-                    for col in 0..columns {
-                        let enemy = Enemy::from_preload(
-                            tm.get_preload("assets/enemy.png").unwrap(),
-                            240.0 + col as f32 * spacing_x,
-                            25.0 + row as f32 * spacing_y,
-                            screen_width() * 0.055,
-                            screen_height() * 0.065,
-                            true,
-                            1.0,
-                        );
-                        enemies.push(enemy);
-                    }
-                }
-
-                if player_hp < 3 {
-                    player_hp += 1;
-                    let heart = Health::from_preload(
-                        tm.get_preload("assets/heart.png").unwrap(),
-                        35.0 + hearts.len() as f32 * 55.0,
-                        675.0,
-                        45.0,
-                        45.0,
+            columns = random_columns;
+            rows = random_rows;
+            for row in 0..rows {
+                for col in 0..columns {
+                    let enemy = Enemy::from_preload(
+                        tm.get_preload("assets/enemy.png").unwrap(),
+                        240.0 + col as f32 * spacing_x,
+                        25.0 + row as f32 * spacing_y,
+                        screen_width() * 0.055,
+                        screen_height() * 0.065,
                         true,
                         1.0,
                     );
-                    hearts.push(heart);
+                    enemies.push(enemy);
                 }
             }
+
+            if player_hp < 3 {
+                player_hp += 1;
+                let heart = Health::from_preload(
+                    tm.get_preload("assets/heart.png").unwrap(),
+                    35.0 + hearts.len() as f32 * 55.0,
+                    675.0,
+                    45.0,
+                    45.0,
+                    true,
+                    1.0,
+                );
+                hearts.push(heart);
+            }
+        }
 
         // Enemy Movement
         for enemy in &mut enemies {
@@ -284,6 +289,7 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
         gamebars.draw();
         lbl_score.draw();
         lbl_highscore.draw();
+        lbl_wave.draw();
 
         for heart in &hearts {
             heart.get_image().draw();

@@ -9,7 +9,6 @@ mod utils;
 mod custom;
 mod menu;
 mod game;
-mod win;
 mod lose;
 mod help;
 
@@ -49,7 +48,6 @@ async fn main() {
             (current_screen, tm, score, highscore) = match current_screen.as_str() {
                 "menu" => menu::run(tm, score, highscore).await,
                 "game" => game::run(tm, score, highscore).await,
-                "win" => win::run(tm, score, highscore).await,
                 "lose" => lose::run(tm, score, highscore).await,
                 "help" => help::run(tm, score, highscore).await,
                 _ => break,

@@ -31,7 +31,7 @@ let btn_exit = TextButton::new(
 if score > highscore {
     highscore += score;
 }
-let mut lbl_highscore = Label::new(format!("Highscore:\n{}", highscore), 450.0, 75.0, 60);
+let mut lbl_highscore = Label::new(format!("Highscore: {}", highscore), 350.0, 100.0, 60);
 lbl_highscore.with_colors(RED, Some(BLACK));
 
     loop {
