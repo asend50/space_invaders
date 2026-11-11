@@ -44,32 +44,35 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
         1.0,             // Zoom level (100%)
     );
 
+    // Buttons:
     let btn_exit = TextButton::new(950.0, 25.0, 60.0, 60.0, "X", RED, ORANGE, 30);
-
     let btn_return = TextButton::new(25.0, 25.0, 60.0, 60.0, "<-", BLUE, PURPLE, 30);
 
+    // Labels:
     let mut lbl_score = Label::new(format!("Score:\n{}", score), 25.0, 125.0, 45);
     let mut lbl_highscore = Label::new(format!("Highscore:\n{}", highscore), 815.0, 125.0, 45);
-    let mut wave = 1;
     let mut lbl_wave = Label::new(format!(""), 835.0, 710.0, 45);
-    let mut rng = ::rand::rng();
+    
 
-    // Variables:
+    // Vectors:
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemybullets: Vec<Bullet> = Vec::new();
     let mut bullets_to_remove: Vec<usize> = Vec::new();
     let mut enemy_bullets_to_remove: Vec<usize> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
     let mut hearts: Vec<Health> = Vec::new();
+
+    // Variables:
     let mut shoot_cooldown = 0.0;
     let mut enemyshoot_cooldown = 2.0;
     let mut columns;
     let mut rows;
-    let mut enemy_speed = 0.2;
+    let mut enemy_speed = 0.2;let mut wave = 1;
     let spacing_x = screen_width() * 0.08;
     let spacing_y = screen_height() * 0.09;
     let min_x = 230.0;
     let max_x = 740.0;
+    let mut rng = ::rand::rng();
     let random_columns: i32 = rng.random_range(5..=6);
     let random_rows: i32 = rng.random_range(4..=6);
     let mut player_hp = 3;
