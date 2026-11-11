@@ -57,6 +57,8 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
     // Variables:
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut enemybullets: Vec<Bullet> = Vec::new();
+    let mut bullets_to_remove: Vec<usize> = Vec::new();
+    let mut enemy_bullets_to_remove: Vec<usize> = Vec::new();
     let mut enemies: Vec<Enemy> = Vec::new();
     let mut hearts: Vec<Health> = Vec::new();
     let mut shoot_cooldown = 0.0;
@@ -146,7 +148,7 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
             bullets.push(bullet);
         }
 
-        for bullet_index in (0..bullets.len()).rev() {
+        for bullet_index in 0..bullets.len() {
             let bullet = &mut bullets[bullet_index];
             bullet.playershoot();
             bullet.get_image().draw();
@@ -154,15 +156,14 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
             if bullet.image.get_y() < -100.0 {
                 bullet.image.clear();
                 bullet.move_dir = vec2(0.0, 0.0);
-                bullets.remove(bullet_index);
-                continue;
+                bullets_to_remove.push(bullet_index);
             }
 
             // Enemy and Bullet collsion to kill enemies.
-            for enemy_index in (0..enemies.len()).rev() {
+            for enemy_index in 0..enemies.len() {
                 if check_collision(bullet.get_image(), enemies[enemy_index].get_image(), 1) {
                     enemies.remove(enemy_index);
-                    bullets.remove(bullet_index);
+                    bullets_to_remove.push(bullet_index);
                     score += 100;
                     lbl_score.set_text(format!("Score:\n{}", score));
                     if score > highscore {
@@ -197,7 +198,7 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
             enemybullets.push(enemybullet);
         }
 
-        for enemybullet_index in (0..enemybullets.len()).rev() {
+        for enemybullet_index in 0..enemybullets.len() {
             let enemybullet = &mut enemybullets[enemybullet_index];
             enemybullet.enemyshoot();
             enemybullet.get_image().draw();
@@ -205,12 +206,12 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
             if enemybullet.image.get_y() > screen_height() + 100.0 {
                 enemybullet.image.clear();
                 enemybullet.move_dir = vec2(0.0, 0.0);
-                enemybullets.remove(enemybullet_index);
+                enemy_bullets_to_remove.push(enemybullet_index);
                 continue;
             }
 
             if check_collision(enemybullet.get_image(), player.get_image(), 1) {
-                enemybullets.remove(enemybullet_index);
+                enemy_bullets_to_remove.push(enemybullet_index);
 
                 if !hearts.is_empty() {
                     hearts.pop();
@@ -225,6 +226,16 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
                 break;
             }
         }
+
+        for &bullet_index in &bullets_to_remove {
+            bullets.remove(bullet_index);
+        }
+        bullets_to_remove.clear();
+
+        for &enemybullet_index in &enemy_bullets_to_remove {
+            enemybullets.remove(enemybullet_index);
+        }
+        enemy_bullets_to_remove.clear();
 
         // Next Wave code
         if enemies.is_empty() {
@@ -269,15 +280,26 @@ pub async fn run(tm: TextureManager, mut score: i32, mut highscore: i32) -> (Str
             enemy.image.set_x(enemy.image.get_x() + enemy_speed * 2.0);
         }
 
-        let leftside = enemies.iter().map(|e| e.image.get_x()).reduce(f32::min).unwrap_or(0.0);
-        let rightside = enemies.iter().map(|e| e.image.get_x()).reduce(f32::max).unwrap_or(0.0);
 
-        if rightside >= max_x || leftside <= min_x {
-            for enemy in &mut enemies {
-                enemy.image.set_x(enemy.image.get_x() - enemy_speed * 2.0);
-                enemy.image.set_y(enemy.image.get_y() + 25.0);
+        let mut left = 0.0;
+        let mut right = 0.0;
+
+        for enemy in &enemies {
+            let x = enemy.image.get_x();
+
+            if x < left || left == 0.0 {
+                left = x;
             }
+            if x > right {
+                right = x;
+            }
+        }
+
+        if left <= min_x || right >= max_x {
             enemy_speed *= -1.0;
+            for enemy in &mut enemies {
+                enemy.image.set_y(enemy.image.get_y() + 10.0);
+            }
         }
 
         // Lose Code
